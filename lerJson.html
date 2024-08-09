@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Busca por Nome, Email ou Telefone</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #333; /* Fundo escuro */
+            color: #fff; /* Texto branco */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            margin-right: 10px;
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #666; /* Borda cinza escuro */
+            border-radius: 5px;
+            background-color: #444; /* Fundo dos campos de entrada */
+            color: #fff; /* Texto dos campos de entrada */
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            background-color: #555; /* Fundo do botão */
+            border: 1px solid #666; /* Borda do botão */
+            color: #fff; /* Texto do botão */
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #666; /* Fundo do botão ao passar o mouse */
+        }
+        .result {
+            margin-top: 20px;
+        }
+        hr {
+            border: 1px solid #555; /* Linha horizontal cinza escuro */
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <h1>Buscar Usuário</h1>
+        
+        <form id="searchForm">
+            <label for="query">Pesquisar por Nome, Email <br>ou Telefone:</label>
+            <br>
+            <br>
+            <input type="text" id="query" placeholder="Nome, Email ou Telefone">
+            <br><br>
+            <button type="submit">Pesquisar</button>
+        </form>
+
+        <div id="results" class="result"></div>
+    </div>
+
+    <script>
+        let users = [];
+
+        async function fetchUsers() {
+            try {
+                const response = await fetch('usuarios.json');
+                if (!response.ok) {
+                    throw new Error('Erro ao carregar JSON: ' + response.statusText);
+                }
+                users = await response.json();
+                console.log('Usuários carregados:', users);
+            } catch (error) {
+                console.error('Erro ao carregar JSON:', error);
+            }
+        }
+
+        function search(query) {
+            return users.filter(user => 
+                user.nome.toLowerCase().includes(query.toLowerCase()) ||
+                user.email.toLowerCase().includes(query.toLowerCase()) ||
+                user.telefones.some(tel => tel.numero.includes(query))
+            );
+        }
+
+        function displayResults(results) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+
+            if (results.length === 0) {
+                resultsDiv.innerHTML = '<p>Nenhum usuário encontrado.</p>';
+                return;
+            }
+
+            results.forEach(user => {
+                const userDiv = document.createElement('div');
+                userDiv.innerHTML = `
+                    <p><strong>Nome:</strong> ${user.nome}</p>
+                    <p><strong>Idade:</strong> ${user.idade}</p>
+                    <p><strong>Email:</strong> ${user.email}</p>
+                    <p><strong>Endereços:</strong></p>
+                    <ul>
+                        ${user.enderecos.map(addr => `
+                            <li>${addr.tipo}: ${addr.rua}, ${addr.numero} - ${addr.cidade}, ${addr.estado} - CEP: ${addr.cep}</li>
+                        `).join('')}
+                    </ul>
+                    <p><strong>Telefones:</strong></p>
+                    <ul>
+                        ${user.telefones.map(phone => `
+                            <li>${phone.tipo}: ${phone.numero}</li>
+                        `).join('')}
+                    </ul>
+                    <hr>
+                `;
+                resultsDiv.appendChild(userDiv);
+            });
+        }
+
+        document.getElementById('searchForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const query = document.getElementById('query').value;
+            console.log('Consulta pesquisada:', query);
+
+            if (query.trim() === '') {
+                alert('Por favor, insira um nome, email ou telefone para a pesquisa.');
+                return;
+            }
+
+            const results = search(query);
+            displayResults(results);
+        });
+
+        fetchUsers();
+    </script>
+</body>
+</html>
